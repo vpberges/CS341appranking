@@ -4,6 +4,9 @@ train_app_rating.csv
 train_final_downloads.csv
 train_revenue.csv
 train_usage.csv
+train_release_date.csv
+train_cumulative_downloads_2015-02.csv
 sentiment.csv
 predictors.csv
+*.csv
 .ipynb_checkpoints/
