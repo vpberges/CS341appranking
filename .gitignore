@@ -10,3 +10,4 @@ sentiment.csv
 predictors.csv
 *.csv
 .ipynb_checkpoints/
+checkpoint
