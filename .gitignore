@@ -11,3 +11,4 @@ predictors.csv
 *.csv
 .ipynb_checkpoints/
 checkpoint
+jupyterhub*
