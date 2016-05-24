@@ -135,72 +135,77 @@ def mart_responces(prediction, true_score):
     return true_score - prediction
 
 
-def learn(train_file, validation_file, n_trees=10, learning_rate=0.1, k=10):
-    print "Loading train file"
-    train = np.loadtxt(train_file, delimiter=",", skiprows=1)
-    validation = np.loadtxt(validation_file, delimiter=",", skiprows=1)
+def learn(features,scores, queries = "no_query", n_trees=10, learning_rate=0.1, k=10, verbiose = False):
+    if verbiose : print "Loading train file"
+    #train = np.loadtxt(train_file, delimiter=",", skiprows=1)
+    #validation = np.loadtxt(validation_file, delimiter=",", skiprows=1)
 
-    scores = train[:, 0]
-    val_scores = train[:, 0]
+    #I should replace this input
+    
+    #scores = train[:, 0]
+    #val_scores = train[:, 0]
 
-    queries = train[:, 1]
-    val_queries = validation[:, 1]
+    #queries = train[:, 1]
+    #val_queries = validation[:, 1]
 
-    features = train[:, 3:]
-    val_features = validation[:, 3:]
+    #features = train[:, 3:]
+    #val_features = validation[:, 3:]
+    
+    if queries == "no_query":
+        quieries = np.ones(len(scores))
 
     ensemble = Ensemble(learning_rate)
 
-    print "Training starts..."
+    if verbiose : print "Training starts..."
     model_output = np.array([float(0)] * len(features))
-    val_output = np.array([float(0)] * len(validation))
+    #val_output = np.array([float(0)] * len(validation))
 
     # print model_output
     # best_validation_score = 0
     time.clock()
     for i in range(n_trees):
-        print " Iteration: " + str(i + 1)
+        if verbiose :print " Iteration: " + str(i + 1)
 
         # Compute psedo responces (lambdas)
         # witch act as training label for document
         start = time.clock()
-        print "  --generating labels"
-        # lambdas = compute_lambdas(model_output, scores, queries, k)
+        if verbiose :print "  --generating labels"
+        #lambdas = compute_lambdas(model_output, scores, queries, k)
         lambdas = mart_responces(model_output, scores)
-        print "  --done", str(time.clock() - start) + "sec"
+        if verbiose :print "  --done", str(time.clock() - start) + "sec"
 
         # create tree and append it to the model
-        print "  --fitting tree"
+        if verbiose :print "  --fitting tree"
         start = time.clock()
         tree = DecisionTreeRegressor(max_depth=2)
         # print "Distinct lambdas", set(lambdas)
         tree.fit(features, lambdas)
 
-        print "  ---done", str(time.clock() - start) + "sec"
-        print "  --adding tree to ensemble"
+        if verbiose :print "  ---done", str(time.clock() - start) + "sec"
+        if verbiose :print "  --adding tree to ensemble"
         ensemble.add(tree)
 
         # update model score
-        print "  --generating step prediction"
+        if verbiose :print "  --generating step prediction"
         prediction = tree.predict(features)
         # print "Distinct answers", set(prediction)
 
-        print "  --updating full model output"
+        if verbiose :print "  --updating full model output"
         model_output += learning_rate * prediction
         # print set(model_output)
 
         # train_score
         start = time.clock()
-        print "  --scoring on train"
-        train_score = ndcg(model_output, scores, queries, 10)
-        print "  --iteration train score " + str(train_score) + ", took " + str(time.clock() - start) + "sec to calculate"
+        if verbiose :print "  --scoring on train"
+        train_score = ndcg(model_output, scores, queries, k)
+        if verbiose :print "  --iteration train score " + str(train_score) + ", took " + str(time.clock() - start) + "sec to calculate"
 
         # validation score
-        print "  --scoring on validation"
-        val_output += learning_rate * tree.predict(val_features)
-        val_score = ndcg(val_output, val_scores, val_queries, 10)
+        #if verbiose :print "  --scoring on validation"
+        #val_output += learning_rate * tree.predict(val_features)
+        #val_score = ndcg(val_output, val_scores, val_queries, k)
 
-        print "  --iteration validation score " + str(val_score)
+        if verbiose :print "  --iteration validation score " + str(val_score)
 
         # if(validation_score > best_validation_score):
         #         best_validation_score = validation_score
@@ -215,31 +220,37 @@ def learn(train_file, validation_file, n_trees=10, learning_rate=0.1, k=10):
         # ensemble.remove(len(ensemble) - best_model_len)
 
     # finishing up
-    print "final quality evaluation"
+    if verbiose :print "final quality evaluation"
     # train_score = compute_ndcg(ensemble.eval(features), scores)
     # test_score = compute_ndcg(ensemble.eval(validation), validation_score)
 
     # print "train %s, test %s" % (train_score, test_score)
-    print "Finished sucessfully."
-    print "------------------------------------------------"
+    if verbiose :print "Finished sucessfully."
+    if verbiose :print "------------------------------------------------"
     return ensemble
 
 
-def evaluate(model, fn):
-    predict = np.loadtxt(fn, delimiter=",", skiprows=1)
+def evaluate(model, predict, queries = "no_query"):
+    #predict = np.loadtxt(fn, delimiter=",", skiprows=1)
 
-    queries = predict[:, 1]
-    doc_id  = predict[:, 2] 
-    features = predict[:, 3:]
+    #queries = predict[:, 1]
+    #doc_id  = predict[:, 2] 
+    #features = predict[:, 3:]
+    #if ids == "no_id":
+    #    ids = np.asarray(["no_id"]*len(predict))
+    if queries == "no_query":
+        queries = np.ones(len(predict))
+    features=predict
 
     results = model.eval(features)
-    writer = csv.writer(open("result.csv"))
-    for line in zip(queries, results, doc_id):
-            writer.writerow(line)
-    return "OK"
+    #writer = csv.writer(open("result.csv"))
+    #for line in zip(queries, results, doc_id):
+    #        writer.writerow(line)
+    #return "OK"
+    return results
 
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option("-t", "--train", action="store", type="string", dest="train_file")
     parser.add_option("-v", "--validation", action="store", type="string", dest="val_file")
@@ -250,3 +261,6 @@ if __name__ == "__main__":
 
     model = learn(options.train_file, options.val_file, n_trees=200)
     evaluate(model, options.predict_file)
+'''
+
+print "LambdaMART functions loaded successfully."
